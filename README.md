@@ -24,7 +24,7 @@ Para remover palavras da nuvem de palavras (chamadas de stopwords), basta inseri
 Na opção "**Marque se deseja usar cor para sentimentos**" a cor da nuvem é baseada em um dicionário léxico do qual um conjunto de palavras já foram pré-classificadas como positiva, negativa ou neutra.
 
 
-[Codigo no github](https://github.com/gomesfellipe/appwordcloud)
+[Codigo no github](https://github.com/gomesfellipe/appwordcloud/blob/master/appwordcloud.Rmd)
 
 **Importante**: Para utilizar a transformação tf-idf em conjunto com a remoção de sufixos, o procedimento deve ser feito na ordem: 
 
