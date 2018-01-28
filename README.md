@@ -47,6 +47,12 @@ A opção "Marque se deseja usar a transformação tf-idf" realizará q [transfo
 
 Obs.: Para efetuar a mudança, clique em "Atualizar nuvem"
 
+**Salvando a Wordcloud**
+
+Para salvar, basta clicar sobre a imagem e salvar, veja:
+
+![](gif/f6.gif) 
+
 ---
 
 **Importante**: Para utilizar a transformação tf-idf em conjunto com a remoção de sufixos, o procedimento deve ser feito na ordem: 
