@@ -8,7 +8,7 @@ Este é um aplicativo criado via RStudio que permite que o usuário carregue sua
 
 **Input da base de dados**
 
-![](gif/f1.gif) 
+ 
 
 Para dar início a construção da nuvem de palavras selecione o arquivo (em formato csv com codificação UTF-8) que contenha apenas duas colunas em que:
 
