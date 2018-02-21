@@ -51,11 +51,11 @@ Os pacotes utilizados incluindo algumas referências:
 
 A instalação de todos esses pacotes pode ser realizada em apenas 1 passo, para mais informações consultar o documento `install_packages.R` e seguir as instruções de instalação 
 
-### Instruções
+# Instruções
 
 Obs.: As funções da nova versão são basicamente as mesmas da versão antiga. A novidade está na tabela de frequências dos termos identificados com disponibilidade para download.
 
-**Input da base de dados**
+## Input da base de dados
 
  ![](img/gif/f1.gif)
 
@@ -66,7 +66,7 @@ Para dar início a construção da nuvem de palavras selecione o arquivo (em for
 
 [exemplo de base](https://github.com/gomesfellipe/appwordcloud/blob/master/base.csv)
 
-**Stopwords**
+## Stopwords
 
 ![](img/gif/f2.gif) 
 
@@ -74,13 +74,13 @@ Para remover palavras da nuvem de palavras (chamadas de stopwords), basta inseri
 
      nao, dele, dela, nos
 
-**Sentimentos**
+## Sentimentos
 
 ![](img/gif/f3.gif) 
 
 Na opção "**Marque se deseja usar cor para sentimentos**" a cor da nuvem é baseada em um dicionário léxico do qual um conjunto de palavras já foram pré-classificadas como positiva, negativa ou neutra. Por default a nuvem já começa com esta opção marcada.
 
-**TextSteamming (remover sufixos)**
+## TextSteamming (remover sufixos)
 
 Com a opção "Marque se deseja usar 'Text Steamming'(remover sufixos)" marcada, a função ` SnowballC::wordStem(x,lang="portuguese)` será utilizada de forma que as palavras em portugues do Brasil tenham seus sufixos removidos, o que influencia na análise de forma que, por exemplo, as palavras "conhecimento", "conhecer", "conhecemos", "conheci" sejam agregadas em um único termo: "conhec", veja:
 
@@ -88,7 +88,7 @@ Com a opção "Marque se deseja usar 'Text Steamming'(remover sufixos)" marcada,
 
 Obs.: Para efetuar a mudança, clique em "Atualizar nuvem"
 
-**TF-IDF**
+## TF-IDF
 
 A opção "Marque se deseja usar a transformação tf-idf" realizará q [transformação if-idf](https://pt.wikipedia.org/wiki/Tf%E2%80%93idf) na matriz de termos que não considera mais a frequência (ou contagem) de termos de modo que as palavras tenham "pesos" atribuídos que levam em consideração não só a frequência das palavras no corpus, mas também a frequência das palavras nos diferentes documentos (cada linha da base de dados). Este valor agora será encarregado de fornecer a "relevância" daquele termo no corpus.
 
@@ -96,11 +96,15 @@ A opção "Marque se deseja usar a transformação tf-idf" realizará q [transfo
 
 Obs.: Para efetuar a mudança, clique em "Atualizar nuvem"
 
-**Salvando a Wordcloud**
+## Salvando a Wordcloud
 
 Para salvar, basta clicar sobre a imagem e salvar, veja:
 
 ![](img/gif/f6.gif) 
+ 
+ ## Fazendo o Download (novidade!)
+ 
+ Agora o usuário pode baixar também a tabela de frequência dos termos identificados clicanco no botão `download`
  
 ---
 
