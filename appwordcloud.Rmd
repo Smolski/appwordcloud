@@ -3,7 +3,6 @@ title: "Crie sua própria Word Cloud"
 output: 
   flexdashboard::flex_dashboard
 runtime: shiny
-options(shiny.sanitize.errors = FALSE)
 ---
 
 
@@ -35,12 +34,12 @@ library(ngram)         #Busca por sequencias de palavras
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #+                  Importando fontes nativas do windows para as letras                         +
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-windowsFonts(
-  A=windowsFont("Arial Black"),
-  B=windowsFont("Bookman Old Style"),
-  C=windowsFont("Comic Sans MS"),
-  D=windowsFont("Symbol")
-)
+# windowsFonts(
+#   A=windowsFont("Arial Black"),
+#   B=windowsFont("Bookman Old Style"),
+#   C=windowsFont("Comic Sans MS"),
+#   D=windowsFont("Symbol")
+# )
 #-----------------------------------------------------------------------------------------------
 
 
@@ -258,9 +257,9 @@ ui <- fluidPage(                                                      # Funçõe
     sidebarPanel(                                                     # sidebarPanel contem os inputs e o mainPanel contém outputs
 
       
-      radioButtons("sep", "Separador",                                # Input: Selecionar um item de uma lista
-                   choices = c(Comma = ",",Semicolon = ";",           # Opcoes de separadores do input em formato csv
-                               Tab = "\t"),selected = ","),
+      # radioButtons("sep", "Separador",                                # Input: Selecionar um item de uma lista
+      #              choices = c(Comma = ",",Semicolon = ";",           # Opcoes de separadores do input em formato csv
+      #                          Tab = "\t"),selected = ","),
       
       fileInput("file1", "Escolha o arquivo no formato CSV",          # Input: Selecionar um arquivo csv do computador 
                 multiple = TRUE,                                      # Permite carregar mais de um arquivo
@@ -276,6 +275,12 @@ ui <- fluidPage(                                                      # Funçõe
       hr(),                                                           # Linha horizontal
 
 #Opcoes para o layout da wordcloud :
+      sliderInput("scalemin",                                             # Input: Deslize para selecionar Tamanho minimo para palavras
+                  "Tamanho minimo para palavras:",                        # Titulo
+                  min = 0.5,  max = 4, value = 0.5),                      # Valor minimo, maximo e default
+      sliderInput("scalemax",                                             # Input: Deslize para selecionar Tamanho maximo para palavras
+                  "Tamanho maximo para palavras:",                    # Titulo
+                  min = 1,  max = 5, value = 4),                      # Valor minimo, maximo e default
       sliderInput("freq",                                             # Input: Deslize para selecionar algum valor no intervalo
                   "Frequência minima:",                               # Titulo
                   min = 1,  max = 100, value = 15),                   # Valor minimo, maximo e default
@@ -301,12 +306,14 @@ ui <- fluidPage(                                                      # Funçõe
 # Para exibir a nuvem :
     mainPanel(                                                        # mainPanel contém outputs e o sidebarPanel contem os inputs 
       plotOutput("plot"),                                             #"plot" = "output$plot <- renderPlot({  (...) })"
+      downloadButton("downloadPlot", "Download da nuvem"),          # downloadtable = "output$downloadtable <- downloadHandler( ... )"
+      tags$br(),                                                      # Espaço em branco
+      tags$hr(),                                                             # Linha horizontal
 	  dataTableOutput("table"),                                         #"table" = "output$table <- renderDataTable({ (...) })"
       tags$br(),                                                      # Espaço em branco
-      tags$br(),                                                      # Espaço em branco
-      downloadButton("downloadtable", "Download the table"),          # downloadtable = "output$downloadtable <- downloadHandler( ... )"
-      tags$br(),                                                      # Espaço em branco
-      tags$hr()                                                             # Linha horizontal
+      downloadButton("downloadtable", "Download da tabela"),          # downloadtable = "output$downloadtable <- downloadHandler( ... )"
+      plotOutput("plot2"),                                             #"plot" = "output$plot <- renderPlot({  (...) })"
+      tags$br()                                                      # Espaço em branco
     )
   )
 )
@@ -316,17 +323,17 @@ ui <- fluidPage(                                                      # Funçõe
 server <- function(input, output, session) {                # Funcao do servidor que recebe o imput$ e retorna o output$              
   
   terms <- reactive({                                       # Definir uma expressão reativa para o do documento
-
-    
+set.seed(1234) 
+    req(input$file1)                                               # Leitura dos dados ficara armazenada no objeto terms
     df <- read.csv(input$file1$datapath,                    # Leitura da base de dados com os inputs obtidos em ui
              header = input$header,
-             sep = input$sep,encoding = "UTF-8")
-    
-# Removendo linhas duplicadas:
-    names(df)=c("V1","V2")                                  # Altera o nome das variaveis da base lida
-    df=df%>%                                                # Alterando o objeto lido
-      distinct(V2,V1,keep_all=T)                            # Remove linhas iguais de acordo com o texto em seguida o usuario iguais
-    df=df[,2]                                               # Seleciona a coluna do texto
+             sep = ";",encoding = "UTF-8")
+     df=df[,1]
+# # Removendo linhas duplicadas:
+#     names(df)=c("V1","V2")                                  # Altera o nome das variaveis da base lida
+#     df=df%>%                                                # Alterando o objeto lido
+#       distinct(V2,V1,keep_all=T)                            # Remove linhas iguais de acordo com o texto em seguida o usuario iguais
+#     df=df[,2]                                               # Seleciona a coluna do texto
     df=apply(data.frame(df),1,cleanTweets)                  # Aplica a funcao cleanTweets
 
     
@@ -355,8 +362,9 @@ server <- function(input, output, session) {                # Funcao do servidor
   datatable_rep <- repeatable(datatable)                                 #Uma versao repetitiva da função que foi informada
 
     output$plot <- renderPlot({                                          # Gerando o output$plot usado em  mainPanel(plotOutput("plot")) no UI
+    set.seed(1234) 
     v <- terms()                                                         # Obtendo o resultado da função global "getTermMatrix()"
-    set.seed(1234)                                                       # Semente para que a nuvem criada seja sempre a mesma
+                                                          # Semente para que a nuvem criada seja sempre a mesma
     
     d <- data.frame(words = names(v),freq=v)                             # Crie um data.frame com as strings e sua freqüência
 
@@ -373,8 +381,9 @@ server <- function(input, output, session) {                # Funcao do servidor
     paste('stats', '.csv', sep='')
   },
   content = function(file) {
-    v <- terms()
     set.seed(1234)
+    v <- terms()
+    
     df2 <- data.frame(words = names(v),freq=v)
 
     write.csv(df2, file,row.names = F)
@@ -428,10 +437,11 @@ server <- function(input, output, session) {                # Funcao do servidor
         ifelse(sentimentos$sentiment=="Neutro","#666666",               # Se for "Neutro" sera cinza, se nao:
                ifelse(sentimentos$sentiment=="Positivo","blue","red"))) #Se for "Positivo" recebe azul, se nao é vermelho
     
-    par(bg="#f2f2f2")                                                   # Define a cor do fundo da figura
+                                                       # Define a cor do fundo da figura
     set.seed(1234)
+    req(input$file1)                                               # Leitura dos dados ficara armazenada no objeto terms
     wordcloud_rep(names(v), freq=as.numeric(v),                         # Funcao repetitiva wordcloud, objeto v foi retornado pela funcao global getTermMatrix()
-                  scale=c(4,0.5),                                       # Um vetor de comprimento 2 que indica o range do tamanho das palavras     
+                  scale=c(input$scalemax,input$scalemin),                                       # Um vetor de comprimento 2 que indica o range do tamanho das palavras     
                   min.freq = input$freq,                                # Input informado pelo usuario
                   max.words=input$max,                                  # Input informado pelo usuario
                   colors=sentimentos$col,                               # Input informado pelo usuario
@@ -443,10 +453,11 @@ server <- function(input, output, session) {                # Funcao do servidor
 
 #Se a analise de sentimentos nao for selecionada  
     }else{
-    par(bg="#f2f2f2")                                                   # Define a cor do fundo da figura
+                                                       # Define a cor do fundo da figura
       set.seed(1234)
+      req(input$file1)                                               # Leitura dos dados ficara armazenada no objeto terms
      wordcloud_rep(names(v), freq=as.numeric(v),                        # As entradas serao as mesmas mensionadas acima, com excessao da cor
-                   scale=c(4,0.5),                                      # Um vetor de comprimento 2 que indica o range do tamanho das palavras   
+                   scale=c(input$scalemax,input$scalemin),                                      # Um vetor de comprimento 2 que indica o range do tamanho das palavras   
                    min.freq = input$freq,                               # Input informado pelo usuario
                    max.words=input$max,                                 # Input informado pelo usuario
                    colors=c("#dd003f","#002637","#0bdc99","#00bac5","#ff8947","#c20037","#00a2ab")%>%  #Cores desejadas
@@ -460,6 +471,117 @@ server <- function(input, output, session) {                # Funcao do servidor
     
   })                                                                    # Encerra o renderPlot({})
   
+    
+    
+    
+    
+    
+    ###################################################################################################
+    ##########    Repetindo o codigo para renderizar a nuvem para download  ###########################
+    ###################################################################################################
+    
+    
+    
+    
+    output$plot2 <- renderPlot({                                          # Gerando o output$plot2 usado em  mainPanel(plotOutput("plot2")) no UI para renderizar a nuvem para download
+    
+      # criando botao de download para nuvem 
+  output$downloadPlot <- downloadHandler(
+    filename = "wordcloud.png",
+    content = function(file) {
+    png(file, width = 800, height = 800, type='cairo')
+
+    set.seed(1234)                                                       # Semente para que a nuvem criada seja sempre a mesma  
+    v <- terms()                                                         # Obtendo o resultado da função global "getTermMatrix()"
+    
+    
+    d <- data.frame(words = names(v),freq=v)                             # Crie um data.frame com as strings e sua freqüência
+  
+   
+# Analise de sentimentos
+  if(input$cor){                                                         # Se a opcao de sentimentos estiver selecionada
+    
+      sentiLex_lem_PT02 <- lexiconPT::sentiLex_lem_PT02                  # Obtem o dicionario lexico em Portugues
+      
+      dicionary=data.frame(cbind(sentiLex_lem_PT02$term,                 # Seleciona as palavras e 
+                                 sentiLex_lem_PT02$polarity))            # a polaridade de cada uma
+      
+      matriz=d                                                           # Cria uma base temporaria para o join
+      
+      names(dicionary)=c("words", "sentiment")                           # Alterando os nomes das colunas do dicionario e da base obtida
+      names(matriz)=c("words", "freq")                                   # (O nome deve ser o mesmo para o join)
+       
+      dicionary$words=as.character(dicionary$words)                      # Transformando as duas
+      matriz$words=as.character(matriz$words)                            # bases obtidas em strings
+      
+      
+      if(input$textStemming){                                            # Se textStemming estiver ligada
+        dicionary$words <- wordStem(dicionary$words,                     # Steamming o dicionario lexico tambem
+                                    language = "portuguese")             # De acordo com a lingua portuguesa
+        }
+      
+      dicionary=dicionary[ dicionary$sentiment==1 | dicionary$sentiment==0 | dicionary$sentiment==-1, ] # Obtendo so os polos -1, 1 e 0
+      dicionary$sentiment=as.factor(dicionary$sentiment)                # Transformando em fator
+      
+      #Alterando o nome dos fatores para o respectivo sentimento:
+      levels(dicionary$sentiment)[levels(dicionary$sentiment)==-1]=c("Negativo")
+      levels(dicionary$sentiment)[levels(dicionary$sentiment)==0]=c("Neutro")
+      levels(dicionary$sentiment)[levels(dicionary$sentiment)==1]=c("Positivo")
+      
+      #Join das strings do documento com as strings nativas do pacote LexiconPT
+      sentimentos=data.frame(matriz) %>%                                # O objeto "sentimentos" recebe
+        left_join(data.frame(dicionary),by="words") %>%                 # left_join mantem todas as linhas da base matriz (esquerda) e busca por pares com o dicionario 
+        select(words,sentiment,freq)%>%                                 # Seleciona as colunas das strings, o sentimento e sua frequencia
+        distinct(words,.keep_all = T)                                   # Seleciona apenas linhas distintas
+      
+      rownames(d)=d$words                                               # Nomeia as linhas do data.frame d   
+      
+      sentimentos$sentiment[is.na(sentimentos$sentiment)]="Neutro"      # Neutro para palavras fora do dicionario
+      
+      #Criando coluna de cores para cada sentimento
+      sentimentos$col=c(                                                # Criando uma nova coluna para objeto "sentimentos"
+        ifelse(sentimentos$sentiment=="Neutro","#666666",               # Se for "Neutro" sera cinza, se nao:
+               ifelse(sentimentos$sentiment=="Positivo","blue","red"))) #Se for "Positivo" recebe azul, se nao é vermelho
+    
+                                                       # Define a cor do fundo da figura
+    set.seed(1234)
+    req(input$file1)
+    wordcloud_rep(names(v), freq=as.numeric(v),                         # Funcao repetitiva wordcloud, objeto v foi retornado pela funcao global getTermMatrix()
+                  scale=c(input$scalemax,input$scalemin),                                       # Um vetor de comprimento 2 que indica o range do tamanho das palavras     
+                  min.freq = input$freq,                                # Input informado pelo usuario
+                  max.words=input$max,                                  # Input informado pelo usuario
+                  colors=sentimentos$col,                               # Input informado pelo usuario
+                  random.order=FALSE,                                   # Plot das palavras em ordem aleatória. Se falso, eles serão plotados em frequência decrescente
+                  rot.per=(1-input$horizontal),                         # Proporção de palavras com rotação de 90 graus
+                  use.r.layout=FALSE,                                   # Se falso, o código c ++ é usado para detecção de colisão, caso contrário, R é usado
+                  # family = "C",                                         # Seleciona a fonte informada em windowsFonts no inicio do documento
+                  font = 2)                                             # 1:default, 2:negrito, 3:italico, 4:negrito+italico
+
+#Se a analise de sentimentos nao for selecionada  
+    }else{                                                 # Define a cor do fundo da figura
+      set.seed(1234)
+      req(input$file1)
+     wordcloud_rep(names(v), freq=as.numeric(v),                        # As entradas serao as mesmas mensionadas acima, com excessao da cor
+                   scale=c(input$scalemax,input$scalemin),                                      # Um vetor de comprimento 2 que indica o range do tamanho das palavras   
+                   min.freq = input$freq,                               # Input informado pelo usuario
+                   max.words=input$max,                                 # Input informado pelo usuario
+                   colors=c("#dd003f","#002637","#0bdc99","#00bac5","#ff8947","#c20037","#00a2ab")%>%  #Cores desejadas
+                     rev(),                                                        #Altera a ordem que as cores participarao da figura
+                   random.order=FALSE,                                  # Plot das palavras em ordem aleatória. Se falso, eles serão plotados em frequência decrescente
+                   rot.per=(1-input$horizontal),                        # Proporção de palavras com rotação de 90 graus
+                   use.r.layout=FALSE,
+                   # family = "C",                                      # Seleciona a fonte informada em windowsFonts no inicio do documento 
+                   font = 2)                                            # 1:default, 2:negrito, 3:italico, 4:negrito+italico
+    }
+    
+  
+      dev.off()                                                         # Encerrando dispositivo da nuvem
+  },
+  contentType = 'application/png'                                       # Formato que deve ser salvo a nuvem
+)
+  
+  })                                                                    # Encerra o renderPlot({})
+    
 }
 
 #Cria o aplicativo Shinny 
@@ -476,12 +598,11 @@ Column {data-width=110}
 
 **Input da base de dados**
 
-Para dar início a construção da nuvem de palavras selecione o arquivo (em formato csv com codificação UTF-8) que contenha apenas duas colunas em que:
+Para dar início a construção da nuvem de palavras selecione o arquivo (em formato csv com codificação UTF-8) que contenha apenas uma coluna em que:
 
-    * Coluna1: usuario
-    * Coluna2: texto
+    * Coluna: texto
 
-[exemplo de base](https://github.com/Dataprevapp/wordcloud/blob/master/base.csv)
+[exemplo de base](https://github.com/gomesfellipe/appwordcloud/blob/master/base.csv)
 
 **Stopwords**
 
@@ -494,143 +615,10 @@ Para remover palavras da nuvem de palavras (chamadas de stopwords), basta inseri
 Na opção "**Marque se deseja usar cor para sentimentos**" a cor da nuvem é baseada em um dicionário léxico do qual um conjunto de palavras já foram pré-classificadas como positiva, negativa ou neutra.
 
 
-[Codigo no github](https://github.com/Dataprevapp/wordcloud)
+[Codigo no github](https://github.com/gomesfellipe/appwordcloud)
 
 **Importante**: Para utilizar a transformação tf-idf em conjunto com a remoção de sufixos, o procedimento deve ser feito na ordem: 
 
     Text Stemming > tf-idf
 
-<!-- Frequências {data-orientation=rows} -->
-<!-- =====================================      -->
-
-<!-- Row {data-height=600} -->
-<!-- ------------------------------------- -->
-
-<!-- ### Tabela de frequência das palavras do documento -->
-
-<!-- ```{r} -->
-
-<!-- ui <- fluidPage( -->
-<!--   # Application title -->
-<!--   titlePanel("Frequência"), -->
-
-<!--   sidebarLayout( -->
-<!--     # Sidebar with a slider and selection inputs -->
-<!--     sidebarPanel( -->
-
-<!--       # Input: Select separator ---- -->
-<!--       radioButtons("sep", "Separador", -->
-<!--                    choices = c(Comma = ",", -->
-<!--                                Semicolon = ";", -->
-<!--                                Tab = "\t"), -->
-<!--                    selected = ","), -->
-<!--       fileInput("file2", "Escolha o arquivo no formato CSV", -->
-<!--                 multiple = TRUE, -->
-<!--                 accept = c("text/csv", -->
-<!--                          "text/comma-separated-values,text/plain", -->
-<!--                          ".csv")), -->
-<!--       actionButton("update", "Atualizar tabela"), -->
-<!--       # Copy the line below to make a text input box -->
-<!--   textInput("text", label = h3("Removendo palavras"), value = "inserir stopwords de acordo com instrução"), -->
-<!--       hr(), -->
-<!--       # sliderInput("freq", -->
-<!--       #             "Frequência minima:", -->
-<!--       #             min = 1,  max = 50, value = 15), -->
-<!--       # sliderInput("max", -->
-<!--       #             "Número máximo de palavras na nuvem:", -->
-<!--       #             min = 1,  max = 300,  value = 100), -->
-<!--   #ngrams: (ligado) -->
-<!--       sliderInput("nngrams", -->
-<!--                   "Número de sequências de palavras", -->
-<!--                   min = 1,  max = 5,  value = 1), -->
-<!--       # Input: Checkbox if file has header ---- -->
-<!--       checkboxInput("header", "Marque se a base possuir cabeçalho", TRUE), -->
-<!--       # checkboxInput("cor", "Marque se deseja usar cor para sentimentos", TRUE), -->
-<!--       checkboxInput("textStemming", "Marque se deseja usar 'Text Steamming' (remover sufixos)", F) -->
-<!--   # ,   checkboxInput("tf_idf", "Marque se deseja usar a transformação tf-idf", F) -->
-<!--   #,downloadButton("downloadPlot", "Download") -->
-<!--     ), -->
-
-
-<!--     # Show Word Cloud -->
-<!--     mainPanel( -->
-<!--       dataTableOutput("table"), -->
-<!--       tags$br(), -->
-<!--       tags$br(), -->
-<!--       downloadButton("downloadtable", "Download the table"), -->
-<!--    tags$br(), -->
-<!--    tags$hr() -->
-<!--     ) -->
-<!--   ) -->
-<!-- ) -->
-
-<!-- server <- function(input, output, session) { -->
-<!--   # Define a reactive expression for the document term matrix -->
-<!--   terms <- reactive({ -->
-
-
-<!--     df <- read.csv(input$file2$datapath, -->
-<!--              header = input$header, -->
-<!--              sep = input$sep,encoding = "UTF-8") -->
-
-<!--     names(df)=c("V1","V2") -->
-
-<!--     #Remover linhas duplicadas: -->
-<!--     df=df%>% -->
-<!--       distinct(V2,V1,keep_all=T) -->
-
-
-<!--     #Organizando base de dados: -->
-<!--     df=t(apply(data.frame(df),1,cleanTweets)) -->
-<!--     df=as.data.frame(df[,2]) -->
-<!--     df=na.omit(df) -->
-
-<!--     # Change when the "update" button is pressed... -->
-<!--     input$update -->
-<!--         # ...but not for anything else -->
-<!--     isolate({ -->
-<!--       withProgress({ -->
-<!--         setProgress(message = "Processando tabela...") -->
-<!--         excludeWords=input$text -->
-<!--         nngrams=input$nngrams -->
-<!--         # tf_idf=input$tf_idf -->
-<!--         tf_idf=F -->
-<!--         textStemming=input$textStemming -->
-<!--         excludeWords=as.vector(str_split(excludeWords, fixed(','))[[1]]) -->
-<!--         getTermMatrix(df,excludeWords,ngrams=nngrams,tf_idf=tf_idf,textStemming=textStemming) -->
-<!--       }) -->
-<!--     }) -->
-<!--   }) -->
-
-<!--   # Make the wordcloud drawing predictable during a session -->
-<!--   datatable_rep <- repeatable(datatable) -->
-
-<!--   output$table <- renderDataTable({ -->
-<!--     v <- terms() -->
-<!--     set.seed(1234) -->
-<!--      d <- data.frame(words = names(v),freq=v) -->
-<!--   datatable_rep(d,rownames=F) -->
-
-<!--   }) -->
-
-<!--   output$downloadtable <- downloadHandler( -->
-<!--   filename = function() { -->
-<!--     paste('stats', '.csv', sep='') -->
-<!--   }, -->
-<!--   content = function(file) { -->
-<!--     v <- terms() -->
-<!--     set.seed(1234) -->
-<!--     df2 <- data.frame(words = names(v),freq=v) -->
-
-<!--     write.csv(df2, file,row.names = F) -->
-<!--   } -->
-<!-- ) -->
-
-
-<!-- } -->
-
-<!-- # Create Shiny app ---- -->
-<!-- shinyApp(ui, server) -->
-
-<!-- ``` -->
 
